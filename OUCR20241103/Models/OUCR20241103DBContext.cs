@@ -17,7 +17,7 @@ namespace OUCR20241103.Models
         }
 
         public virtual DbSet<Direccione> Direcciones { get; set; } = null!;
-        public virtual DbSet<Proveedor> Proveedors { get; set; } = null!;
+        public virtual DbSet<Proveedor> Proveedor { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -34,7 +34,7 @@ namespace OUCR20241103.Models
                 entity.Property(e => e.NumeoDeCasa).HasMaxLength(50);
 
                 entity.HasOne(d => d.IdProveedorNavigation)
-                    .WithMany(p => p.Direcciones)
+                    .WithMany(p => p.Direccione)
                     .HasForeignKey(d => d.IdProveedor)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK__Direccion__IdPro__398D8EEE");

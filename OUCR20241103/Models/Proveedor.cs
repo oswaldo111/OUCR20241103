@@ -7,13 +7,13 @@ namespace OUCR20241103.Models
     {
         public Proveedor()
         {
-            Direcciones = new List<Direccione>();
+            Direccione = new List<Direccione>();
         }
 
         public int Id { get; set; }
         public string Nombre { get; set; } = null!;
         public string Dui { get; set; } = null!;
 
-        public virtual IList<Direccione> Direcciones { get; set; }
+        public virtual IList<Direccione> Direccione { get; set; }
     }
 }

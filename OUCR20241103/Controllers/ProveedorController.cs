@@ -21,33 +21,52 @@ namespace OUCR20241103.Controllers
         // GET: Proveedor
         public async Task<IActionResult> Index()
         {
-              return _context.Proveedors != null ? 
-                          View(await _context.Proveedors.ToListAsync()) :
-                          Problem("Entity set 'OUCR20241103DBContext.Proveedors'  is null.");
+                
+
+              return _context.Proveedor != null ? 
+                          View(await _context.Proveedor.ToListAsync()) :
+                          Problem("Entity set 'OUCR20241103DBContext.Proveedor'  is null.");
+
+                        
         }
 
         // GET: Proveedor/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Proveedors == null)
+            
+            if (id == null || _context.Proveedor == null)
             {
                 return NotFound();
             }
 
-            var proveedor = await _context.Proveedors
+            var proveedor = await _context.Proveedor
+                .Include(s=> s.Direccione)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (proveedor == null)
             {
                 return NotFound();
             }
-
+            ViewBag.Accion = "Details";
             return View(proveedor);
+
         }
 
         // GET: Proveedor/Create
         public IActionResult Create()
         {
-            return View();
+            var proveedor = new Proveedor
+            {
+                Nombre = " ",
+                Dui = " ",
+
+                Direccione = new List<Direccione>()
+            };
+            proveedor.Direccione.Add(new Direccione
+            {
+                Calle = " "
+            });
+            ViewBag.Accion = "Create";
+            return View(proveedor);
         }
 
         // POST: Proveedor/Create
@@ -55,31 +74,65 @@ namespace OUCR20241103.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Dui")] Proveedor proveedor)
+        public async Task<IActionResult> Create([Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor)
         {
-            if (ModelState.IsValid)
-            {
+
+           
                 _context.Add(proveedor);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
-            }
-            return View(proveedor);
+          
+  
         }
+
+        [HttpPost]
+        public ActionResult AgregarDetalles([Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor, string accion)
+        {
+            
+            proveedor.Direccione.Add(new Direccione { Calle = "" });
+
+            ViewBag.Accion = accion;
+            return View(accion, proveedor);
+        }
+
+         public IActionResult EliminarDetalles([Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor,
+           int index, string accion){
+        
+              var det = proveedor.Direccione[index];
+            if (accion == "Edit" && det.Id > 0)
+            {
+                det.Id = det.Id * -1;
+            }
+            else
+            {
+                proveedor.Direccione.RemoveAt(index);
+            }
+
+            ViewBag.Accion = accion;
+            return View(accion, proveedor);
+
+  
+        }
+
 
         // GET: Proveedor/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Proveedors == null)
+             if (id == null || _context.Proveedor == null)
             {
                 return NotFound();
             }
 
-            var proveedor = await _context.Proveedors.FindAsync(id);
+            var proveedor = await _context.Proveedor
+                .Include(s => s.Direccione)
+                .FirstAsync(s => s.Id == id);
             if (proveedor == null)
             {
                 return NotFound();
             }
+            ViewBag.Accion = "Edit";
             return View(proveedor);
+        
         }
 
         // POST: Proveedor/Edit/5
@@ -87,50 +140,84 @@ namespace OUCR20241103.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Dui")] Proveedor proveedor)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor)
         {
             if (id != proveedor.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                try
+                // Obtener los datos de la base de datos que van a ser modificados
+                var proveedorUpdate = await _context.Proveedor
+                        .Include(s => s.Direccione)
+                        .FirstAsync(s => s.Id == proveedor.Id);
+                proveedorUpdate.Nombre = proveedor.Nombre;
+                proveedorUpdate.Dui = proveedor.Dui;
+                // Obtener todos los detalles que seran nuevos y agregarlos a la base de datos
+                var detNew = proveedor.Direccione.Where(s => s.Id == 0);
+                foreach (var d in detNew)
                 {
-                    _context.Update(proveedor);
-                    await _context.SaveChangesAsync();
+                    proveedorUpdate.Direccione.Add(d);
                 }
-                catch (DbUpdateConcurrencyException)
+                // Obtener todos los detalles que seran modificados y actualizar a la base de datos
+                var detUpdate = proveedor.Direccione.Where(s => s.Id > 0);
+                foreach (var d in detUpdate)
                 {
-                    if (!ProveedorExists(proveedor.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    var det = proveedorUpdate.Direccione.FirstOrDefault(s => s.Id == d.Id);
+                    det.Calle = d.Calle;
+                    det.NumeoDeCasa = d.NumeoDeCasa;
+                  
                 }
-                return RedirectToAction(nameof(Index));
+                // Obtener todos los detalles que seran eliminados y actualizar a la base de datos
+                var delDet = proveedor.Direccione.Where(s => s.Id < 0).ToList();
+                if(delDet!=null && delDet.Count > 0)
+                {
+                    foreach (var d in delDet)
+                    {
+                        d.Id = d.Id * -1;
+                        var det = proveedorUpdate.Direccione.FirstOrDefault(s => s.Id == d.Id);
+                        _context.Remove(det);
+                       // proveedorUpdate.Direccioness.Remove(det);
+                    }
+                }                
+                // Aplicar esos cambios a la base de datos
+                _context.Update(proveedorUpdate);
+                await _context.SaveChangesAsync();
             }
-            return View(proveedor);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProveedorExists(proveedor.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        
         }
 
         // GET: Proveedor/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Proveedors == null)
+            if (id == null || _context.Proveedor == null)
             {
                 return NotFound();
             }
 
-            var proveedor = await _context.Proveedors
+            var proveedor = await _context.Proveedor
+            .Include( s => s.Direccione)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (proveedor == null)
             {
                 return NotFound();
             }
+
+            ViewBag.Accion = "Delete";
 
             return View(proveedor);
         }
@@ -140,23 +227,25 @@ namespace OUCR20241103.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Proveedors == null)
+           if (_context.Proveedor == null)
             {
-                return Problem("Entity set 'OUCR20241103DBContext.Proveedors'  is null.");
+                return Problem("Entity set 'OUCR20241103DBContext.Proveedor'  is null.");
             }
-            var proveedor = await _context.Proveedors.FindAsync(id);
+            var proveedor = await _context.Proveedor
+                .FindAsync(id);
             if (proveedor != null)
             {
-                _context.Proveedors.Remove(proveedor);
+                _context.Proveedor.Remove(proveedor);
             }
             
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        
         }
 
         private bool ProveedorExists(int id)
         {
-          return (_context.Proveedors?.Any(e => e.Id == id)).GetValueOrDefault();
+          return (_context.Proveedor?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
