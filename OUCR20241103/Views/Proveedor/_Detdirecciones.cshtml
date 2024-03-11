@@ -13,7 +13,8 @@
                 @Html.DisplayNameFor(model => model.Calle)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.NumeoDeCasa)
+                <label for="">Num de casa</label>
+                @* @Html.DisplayNameFor(model => model.NumeoDeCasa) *@
             </th>
          
             <th>
@@ -39,18 +40,19 @@
                 {
                     <tr>
                         <td>
-                            <input type="hidden" value="@item.Id" name="Direcciones[@index].Id">
-                            <input type="hidden" value="@item.IdProveedor" name="Direcciones[@index].IdProveedor">
+                            <input type="hidden" value="@item.Id" name="Direccione[@index].Id">
+                            <input type="hidden" value="@item.IdProveedor" name="Direccione[@index].IdProveedor">
                             <input class="form-control" data-readonly type="text" name="Direccione[@index].Calle" value="@item.Calle">
                         </td>
                         <td>
-                            <input class="form-control" data-readonly type="text" name="Direccione[@index].NumeoDeCasa" value="@item.NumeoDeCasa">
+                            
+                            <input class="form-control" data-readonly type="number" name="Direccione[@index].NumeoDeCasa" value="@item.NumeoDeCasa">
                         </td>
                      
                         <td>
                             @if (ViewBag.Accion == "Create" || ViewBag.Accion == "Edit")
                             {
-                                <button name="index" value="@index" class="btn btn-primary" type="submit" formaction="@Url.Action("EliminarDetalles")">Eliminar</button>
+                                <button name="index" value="@index" class="btn btn-danger" type="submit" formaction="@Url.Action("EliminarDetalles")">Eliminar</button>
                             }
 
                         </td>

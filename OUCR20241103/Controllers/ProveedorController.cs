@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using OUCR20241103.Models;
 
 namespace OUCR20241103.Controllers
@@ -77,10 +78,14 @@ namespace OUCR20241103.Controllers
         public async Task<IActionResult> Create([Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor)
         {
 
-           
+                if(ModelState.IsValid)
+                {
                 _context.Add(proveedor);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
+
+                }
+                return View(proveedor);
           
   
         }
@@ -96,8 +101,11 @@ namespace OUCR20241103.Controllers
         }
 
          public IActionResult EliminarDetalles([Bind("Id,Nombre,Dui,Direccione")] Proveedor proveedor,
-           int index, string accion){
+           int index, string accion)
+           
+           {
         
+            
               var det = proveedor.Direccione[index];
             if (accion == "Edit" && det.Id > 0)
             {
@@ -105,6 +113,7 @@ namespace OUCR20241103.Controllers
             }
             else
             {
+                Console.WriteLine(index+"nada");
                 proveedor.Direccione.RemoveAt(index);
             }
 
